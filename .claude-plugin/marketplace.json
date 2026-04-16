@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "mozilor",
-      "source": ".",
+      "source": "./",
       "description": "Unified agentic development workflow. Auto-detects frontend (React/Next.js), backend (Node.js/Python/Go/Laravel), and fullstack stacks. Run /setup-project once, then /start-feature for every feature."
     }
   ]
