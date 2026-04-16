@@ -1,10 +1,10 @@
-# Mozilor Workflow Plugin
+# Mozilor Skills — Claude Code Plugin
 
-Agentic development workflow for Mozilor Technologies. Automatically detects your stack and runs the right pipeline — no manual configuration needed.
+Mozilor Technologies' shared skill library and agentic workflow commands for Claude Code.
 
 ---
 
-## Install
+## Installation
 
 Run these two commands once per machine:
 
@@ -13,141 +13,84 @@ Run these two commands once per machine:
 /plugin install workflow@mozilor-skills
 ```
 
----
-
-## Getting started
-
-### Step 1 — Set up your project (once per project)
-
-```bash
-/setup-project
-```
-
-Run this once when you start working on a new project. It explores your codebase and generates 4 skill files that all agents rely on:
-
-| File | Purpose |
-|------|---------|
-| `.claude/skills/project-architecture/SKILL.md` | Tech stack, routing, state, API patterns |
-| `.claude/skills/coding-standards/SKILL.md` | CSS rules, TypeScript, naming conventions |
-| `.claude/skills/figma-to-code/SKILL.md` | Color tokens, typography, icon library *(frontend)* |
-| `.claude/skills/api-contracts/SKILL.md` | Endpoint conventions, auth, error format *(backend)* |
-| `.claude/skills/testing-standards/SKILL.md` | Test framework, auth setup, env vars |
-
-> Re-run anytime with `/setup-project regenerate` to refresh all files, or `/setup-project coding-standards` to regenerate a specific one.
-
----
-
-### Step 2 — Start a feature
-
-```bash
-/start-feature <description> [confluence-url] [figma-url]
-```
-
-**Examples:**
-
-```bash
-# Frontend feature with Figma design
-/start-feature "Add user profile page" https://figma.com/design/abc123...
-
-# Backend feature with Confluence spec
-/start-feature "Add subscription billing endpoint" https://yourco.atlassian.net/wiki/pages/123456
-
-# Simple feature (no URLs needed)
-/start-feature "Add loading state to the submit button"
-
-# Full feature with both
-/start-feature "Build campaign scheduler" https://yourco.atlassian.net/... https://figma.com/design/...
-```
-
----
-
-## How auto-detection works
-
-When you run `/start-feature`, the plugin reads your project config files and detects the stack automatically:
-
-| Your project has | Detected as | Pipeline used |
-|-----------------|-------------|---------------|
-| `react` / `next` in package.json | Frontend | research → design doc → codegen → tests → fix |
-| `express` / `nestjs` / `hono` in package.json | Backend (Node.js) | research → SPARC spec → implement → QA → debug |
-| `fastapi` / `django` in requirements.txt | Backend (Python) | research → SPARC spec → implement → QA → debug |
-| `go.mod` | Backend (Go) | research → SPARC spec → implement → QA → debug |
-| `composer.json` with Laravel | Backend (PHP) | research → SPARC spec → implement → QA → debug |
-| Next.js with `src/app/api/` or `pages/api/` | Fullstack | choose: ui / api / both |
-
-The detected stack is shown before anything runs — you can correct it if needed.
-
----
-
-## What happens when you run `/start-feature`
-
-```
-Step 0   GitNexus setup check (blast-radius analysis — optional)
-Step 1   Parse your input (requirement + URLs)
-Step 2   Auto-detect stack → confirm with you
-─────────────────────────────────────────────────────
-Phase 1  Research agent — fetches Figma + Confluence context
-Phase 2  Requirements alignment — confirms scope with you ✋
-Phase 3  Design / Spec document written to ai-context/ or docs/specs/
-Phase 4  Architecture review — you approve before any code is written ✋
-Phase 5  Implementation — codegen (frontend) or implementer (backend)
-Phase 6  Parallel validation — tests + code review + security run simultaneously
-Phase 7  Iteration loop — fix agent resolves any blocking issues (max 5 rounds)
-Phase 8  Done — summary + macOS notification
-```
-
-✋ = human checkpoint — the workflow pauses and waits for your input.
-
----
-
-## Optional: GitNexus (recommended)
-
-GitNexus gives the agents semantic blast-radius analysis — they can see exactly what breaks if a function signature changes before touching any code.
-
-```bash
-npx gitnexus analyze
-claude mcp add gitnexus -- npx -y gitnexus@latest mcp
-```
-
-Restart Claude Code after adding the MCP server. If you skip this, the workflow still works — agents fall back to Grep/Glob.
-
----
-
-## Keeping the plugin up to date
+To keep it up to date:
 
 ```bash
 /plugin marketplace update mozilor-skills
 ```
 
-Or enable auto-updates: open `/plugin` → **Marketplaces** → toggle **Enable auto-update** for `mozilor-skills`.
+---
+
+## Commands
+
+After installing, two slash commands are available in every project:
+
+### `/setup-project`
+
+Run once per project before starting any feature work. Explores your codebase and writes project-specific skill files that all agents use.
+
+```bash
+/setup-project
+```
+
+Re-run options:
+```bash
+/setup-project regenerate          # overwrite all skill files
+/setup-project coding-standards    # regenerate a specific file
+```
+
+### `/start-feature`
+
+Run for every new feature. Auto-detects your stack and orchestrates the full pipeline.
+
+```bash
+/start-feature <description>
+/start-feature <description> <confluence-url>
+/start-feature <description> <figma-url>
+/start-feature <description> <confluence-url> <figma-url>
+```
 
 ---
 
-## Folder structure created in your project
+## Bundled Skills
 
-```
-your-project/
-├── .claude/
-│   └── skills/                  ← generated by /setup-project
-│       ├── project-architecture/SKILL.md
-│       ├── coding-standards/SKILL.md
-│       ├── figma-to-code/SKILL.md       (frontend/fullstack)
-│       ├── api-contracts/SKILL.md       (backend/fullstack)
-│       └── testing-standards/SKILL.md
-├── ai-context/
-│   ├── designs/                 ← frontend design documents
-│   └── iteration-state/         ← tracks fix iterations per feature
-└── docs/
-    └── specs/                   ← backend SPARC spec documents
-```
+Skills are loaded automatically by Claude Code when relevant — no manual invocation needed.
+
+### Frontend Skills
+
+| Skill | When Claude uses it |
+|-------|-------------------|
+| **react-best-practices** | Writing or reviewing React / Next.js code — 68 performance rules covering waterfalls, bundle size, re-renders, SSR |
+| **composition-patterns** | Designing or refactoring React components — compound components, variants, context patterns |
+| **accessibility-compliance** | Any UI work — WCAG 2.2 AA/AAA, ARIA, keyboard navigation, screen reader support |
+| **react-view-transitions** | Adding animations or page transitions — native View Transition API patterns |
+| **web-design-guidelines** | Reviewing UI code — Vercel Web Interface Guidelines compliance |
+
+### Backend Skills
+
+| Skill | When Claude uses it |
+|-------|-------------------|
+| **api-design** | Designing REST or GraphQL APIs — resource naming, status codes, versioning, pagination |
+| **nodejs-backend** | Writing Node.js server code — layered architecture, error handling, queues, caching |
+| **fastapi-python** | Writing Python backend code — FastAPI patterns and standards |
+| **typescript** | TypeScript-heavy codebases — type safety patterns |
+| **postgres** | Database work — schema design, indexing strategy, query optimisation |
+| **go** | Go backend code — language standards and patterns |
+| **laravel-woo** | PHP projects — Laravel and WooCommerce patterns |
+| **security** | Any implementation — OWASP Top 10, auth, input validation, secrets |
+
+### Workflow Skills
+
+| Skill | When Claude uses it |
+|-------|-------------------|
+| **development-workflows** | Running worktree, peer review, QA gate, debugging, or autofix workflows |
+| **gitnexus** | Semantic code analysis — blast-radius impact, call chain tracing, safe renames |
+| **sparc-developer** | Multi-file backend features — Specification → Pseudocode → Architecture → Refinement → Completion |
+| **reasoning-capture** | Every implementation session — writes `.g4a/.current_reasoning.json` artifact |
 
 ---
 
-## Troubleshooting
+## Requirements
 
-**`/setup-project` already ran but I changed the stack** — run `/setup-project regenerate`.
-
-**Agent got stuck after 5 iterations** — review the blocking issue reported, make a manual fix, then re-run `/start-feature` for just that part.
-
-**Figma MCP not working** — the research agent falls back to `WebFetch`. Designs will still be fetched but with less structured data.
-
-**Tests are blocked on missing `data-testid`** — the test agent reports exactly which elements are missing. Add the attributes manually or let the fix agent handle it.
+- Claude Code latest — run `claude --version` to check, update with `npm i -g @anthropic-ai/claude-code@latest`
+- GitHub account with access to `mozilor-technologies/mozilor-skills`
