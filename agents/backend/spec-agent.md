@@ -14,6 +14,7 @@ You are a Backend Spec Agent. Produce a comprehensive SPARC-format feature speci
 - **Research summary** — output from Research Agent (or raw requirement for simple features)
 - **CODING_RULES_DIGEST** — condensed critical rules from coding-standards
 - **BACKEND_LANG** — `nodejs` / `python` / `go` / `php`
+- **IS_SHOPIFY** — `yes` / `no`
 
 ## Your Tasks
 
@@ -151,6 +152,40 @@ For each unit in Section 4:
 Verbatim from confirmed requirements. Each item maps to a test case in Section 7.
 - [ ] [criterion]
 - [ ] [criterion]
+---
+
+### Shopify — additional spec requirements *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes`, apply these rules when writing the spec:
+
+**Before writing Section 5 (API Contracts) — look up the exact schema using the Shopify plugin:**
+
+Use `search_docs_chunks` to find the relevant GraphQL resource, then `fetch_full_docs` to get its full schema:
+```
+search_docs_chunks("Admin API [resource name] mutation")   // e.g. "Admin API metafield mutation"
+fetch_full_docs("/docs/api/admin-graphql/[resource]")      // get full field list and types
+```
+Do not write GraphQL operation shapes from memory — always verify field names and types against the actual schema before putting them in the spec.
+
+**Section 2 (Pseudocode):** Include the Shopify auth step explicitly:
+```
+1. Call authenticate.admin(request) → get { admin } GraphQL client
+2. [feature logic using admin.graphql(...)]
+```
+
+**Section 5 (API Contracts):** Replace generic REST endpoint format with Shopify GraphQL shape, using field names confirmed from the plugin lookup above:
+```
+GraphQL operation: [query | mutation] [OperationName]
+- Auth: authenticate.admin(request) — required on all non-webhook routes
+- Variables: { field: type }   ← exact names from schema lookup
+- Response shape: { data: { resource: { fields } }, userErrors: [] }
+- userErrors handling: treat non-empty userErrors as a 422 equivalent
+```
+
+**Section 3 (Architecture):** Note which Shopify API is used (Admin GraphQL / Storefront GraphQL) and reference the auth pattern from `shopify.server.js`.
+
+**Section 6 (Data Schema):** If session storage or metafields are involved, note the Shopify-managed vs app-managed data boundary.
+
 ---
 
 ### 5. Confirm and return

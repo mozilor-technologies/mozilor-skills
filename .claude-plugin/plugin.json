@@ -24,6 +24,9 @@
     "nodejs",
     "python",
     "go",
-    "laravel"
+    "laravel",
+    "shopify",
+    "shopify-app",
+    "remix"
   ]
 }

@@ -14,6 +14,17 @@ $ARGUMENTS
 
 ---
 
+## Shopify Research *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes` was passed in the arguments:
+
+- Use the Shopify plugin's tools to look up API schemas and documentation relevant to the feature before searching the codebase. For example: look up the relevant GraphQL Admin API resource, check if a mutation or query exists for what the feature needs.
+- When researching codebase patterns, pay attention to: how `authenticate.admin()` is used in existing routes, how existing GraphQL queries/mutations are structured, how webhooks are registered.
+- In your Recommendations section, explicitly note which Shopify API (Admin GraphQL, Storefront GraphQL) the implementation should use and why.
+- Flag any Shopify API rate limiting or throttling considerations relevant to the feature.
+
+---
+
 ## GitNexus Integration
 
 GitNexus provides a **precomputed knowledge graph** with **semantic search enabled**:

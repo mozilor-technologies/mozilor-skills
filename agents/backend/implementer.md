@@ -14,6 +14,29 @@ $ARGUMENTS
 
 ---
 
+## Shopify Implementation *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes` was passed in the arguments:
+
+**Before writing any GraphQL query or mutation — look up the exact schema using the Shopify plugin:**
+
+```
+search_docs_chunks("Admin API [resource] [operation]")   // e.g. "Admin API product update mutation"
+fetch_full_docs("/docs/api/admin-graphql/[resource]")    // confirm field names, types, required args
+```
+Never write GraphQL field names from memory. Always verify against the schema — a single incorrect field name causes a runtime error that is hard to debug.
+
+**Implementation rules:**
+- **Auth**: Every route handler must call `authenticate.admin(request)` (or `authenticate.storefront(request)` for storefront routes) at the top — never skip this.
+- **GraphQL client**: Use the `admin.graphql(QUERY, { variables })` client returned by `authenticate.admin()`. Do not instantiate a new client.
+- **userErrors**: Always check the `userErrors` array in GraphQL mutation responses. Treat non-empty `userErrors` as a validation failure — surface them to the user.
+- **UI components**: Use Polaris components exclusively (`@shopify/polaris`). Do not use raw HTML elements where a Polaris equivalent exists.
+- **App bridge**: Use `useAppBridge()` for navigation, modals, and toasts — not browser-native equivalents.
+- **Loader/Action pattern**: Follow Remix conventions — data fetching in `loader`, mutations in `action`. Do not fetch data inside components.
+- **Rate limiting**: If the feature makes multiple GraphQL calls, batch them or use Shopify's bulk operations where appropriate.
+
+---
+
 ## GitNexus Integration
 
 GitNexus provides a **precomputed knowledge graph** with **semantic search enabled**:
@@ -150,14 +173,26 @@ Write code that:
 After implementation:
 
 **Step 1: Run linting**
-```bash
-uv run ruff check .
-```
+
+Use the command for the project's backend language:
+
+| BACKEND_LANG | Lint command |
+|---|---|
+| `python` | `uv run ruff check .` |
+| `nodejs` | check `package.json` scripts for `lint` — run `npm run lint` or `npx eslint .` |
+| `php` | `./vendor/bin/pint` (Laravel Pint) or `./vendor/bin/phpcs` |
+| `go` | `go vet ./...` |
 
 **Step 2: Run the FULL test suite (MANDATORY)**
-```bash
-uv run pytest tests/ -v --tb=short
-```
+
+Use the command for the project's backend language:
+
+| BACKEND_LANG | Test command |
+|---|---|
+| `python` | `uv run pytest tests/ -v --tb=short` |
+| `nodejs` | check `package.json` scripts for `test` — run `npm test` or `npm run test` |
+| `php` | `php artisan test` |
+| `go` | `go test ./... -v` |
 
 **You MUST run the full test suite, not just related tests.** Changes can break unrelated tests due to:
 - Shared fixtures and imports
@@ -348,7 +383,7 @@ This is non-negotiable because:
 
 ```bash
 # REQUIRED before completing any implementation
-uv run pytest tests/ -v --tb=short
+# Use the command for your BACKEND_LANG (see Verify section above)
 ```
 
 If any test fails:

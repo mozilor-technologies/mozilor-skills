@@ -39,6 +39,7 @@ Read the following files using the Read tool:
 
 | File | What to detect |
 |------|---------------|
+| `shopify.app.toml` | Shopify app (check if file exists) |
 | `package.json` | Framework, key libraries, scripts, test runner |
 | `pyproject.toml` | Python framework, test runner |
 | `requirements.txt` | Python packages |
@@ -46,6 +47,10 @@ Read the following files using the Read tool:
 | `composer.json` | PHP packages |
 | `README.md` (if exists) | Project description |
 | `CLAUDE.md` (if exists) | Project overrides |
+
+**Shopify indicator**: `shopify.app.toml` exists at project root → set **[IS_SHOPIFY]** = `true`, **[STACK]** = `fullstack`, **[BACKEND_LANG]** = `nodejs`. Skip remaining stack detection.
+
+**If not Shopify:**
 
 **Frontend indicators** (package.json deps): `react`, `next`, `vue`, `@angular/core`, `svelte`, `solid-js`, `@remix-run`, `preact`, `gatsby`, `astro`
 
@@ -59,6 +64,26 @@ Read the following files using the Read tool:
 
 Set **[STACK]** = `frontend` / `backend` / `fullstack`
 Set **[BACKEND_LANG]** = `nodejs` / `python` / `go` / `php` / `none`
+Set **[IS_SHOPIFY]** = `false`
+
+### Shopify Plugin Check *(IS_SHOPIFY only)*
+
+If **[IS_SHOPIFY]** = `true`, check whether the Shopify AI Toolkit plugin is installed and enabled:
+```bash
+claude plugin list | grep -A3 "shopify-plugin" | grep "✔ enabled"
+```
+
+If the command returns no output (plugin missing or disabled), warn the user:
+```
+⚠️  Shopify plugin not detected. For best results, install it:
+
+  /plugin marketplace add Shopify/shopify-ai-toolkit
+  /plugin install shopify-plugin@shopify-plugin
+
+Continuing without it — skill files will still be generated from your codebase.
+```
+
+Then continue to Step 3.
 
 ---
 
@@ -101,6 +126,16 @@ Set **[BACKEND_LANG]** = `nodejs` / `python` / `go` / `php` / `none`
 - Read 2–3 existing route files to understand the endpoint structure
 - Note: HTTP method conventions, request/response patterns, error format, auth middleware
 - Check for OpenAPI/Swagger docs if present
+
+### 3i-shopify. Shopify-specific exploration *(IS_SHOPIFY only)*
+
+- `shopify.app.toml` — app name, scopes, auth strategy
+- `app/shopify.server.js` (or `.ts`) — auth setup, session storage, API client config
+- `app/routes/` — list all route files; note which use `authenticate.admin()`, `authenticate.storefront()`, or webhook handlers
+- `extensions/` — list all extensions (UI extensions, Functions, Theme extensions) with their type and purpose
+- `app/db.server.*` — ORM and session model if present
+- Note: which Shopify APIs are used (Admin GraphQL, Storefront GraphQL, REST)
+- Note: any Polaris component imports in existing route files
 
 ### 3j. Existing reusable components/services
 For every component or service directory:
@@ -146,6 +181,50 @@ Wait for reply before proceeding.
 Use all information from Steps 3 and 4. Write each file directly — no further confirmation needed.
 
 Create directories if missing. Only generate files that were missing or requested for regeneration.
+
+### Shopify — additional sections to include *(IS_SHOPIFY only)*
+
+When **[IS_SHOPIFY]** = `true`, include the following sections in the relevant generated files:
+
+**In `project-architecture`** — add after Tech Stack table:
+```markdown
+## Shopify App Structure
+- Auth strategy: [from shopify.app.toml — e.g. merchant-installed]
+- Scopes: [list from shopify.app.toml]
+- Session storage: [from shopify.server.js]
+- Extensions: [list from extensions/ with type + purpose, or "none"]
+
+## Route Conventions
+- Admin-authenticated routes: use `authenticate.admin(request)` from shopify.server.js
+- Webhook handlers: [file pattern and registration approach]
+- Public/unauthenticated routes: [if any]
+```
+
+**In `api-contracts`** — add after Base URL:
+```markdown
+## Shopify API Usage
+- Admin GraphQL: [yes/no — note client setup from shopify.server.js]
+- Storefront GraphQL: [yes/no]
+- REST Admin API: [yes/no]
+
+## GraphQL Patterns
+[How Admin API queries/mutations are structured in this app — include 1 example from existing routes]
+
+## Webhook Patterns
+[How webhooks are registered and handled]
+```
+
+**In `coding-standards`** — add under Component / Module Patterns:
+```markdown
+## Shopify / Polaris Rules
+- UI components: use Polaris — import from `@shopify/polaris`
+- Page layout: use AppProvider > Page > Layout structure
+- Loading states: use Polaris Skeleton components
+- Never use raw HTML elements where a Polaris equivalent exists
+- App bridge: use `useAppBridge()` hook for redirect/modal/toast
+```
+
+---
 
 ### File 1 (all stacks): `.claude/skills/project-architecture/SKILL.md`
 
@@ -343,6 +422,38 @@ description: "API design conventions and patterns for [APP NAME] backend. Use be
 |----------|-----------|------|
 | [resource] | GET /... POST /... | [auth] |
 ```
+
+### Shopify — testing-standards additions *(IS_SHOPIFY only)*
+
+When **[IS_SHOPIFY]** = `true`, add the following section inside the generated `testing-standards` file, after the Auth in Tests section:
+
+```markdown
+## Shopify-Specific Test Patterns
+
+### Mocking the Shopify Session
+Use the `shopify` test helper from `@shopify/shopify-app-remix/testing` to mock authenticated sessions:
+```typescript
+import { mockShopifySession } from "@shopify/shopify-app-remix/testing";
+// Set up mock session before each test that hits an authenticated route
+```
+
+### Testing GraphQL Calls
+- Mock `admin.graphql()` responses in unit tests — do not make real API calls in CI.
+- Always include a `userErrors: []` field in mock responses to test the happy path.
+- Add a separate test case with non-empty `userErrors` to verify error handling.
+
+### Testing Webhooks
+- Use the Shopify CLI (`shopify app webhook trigger`) to send test webhook payloads locally.
+- In unit tests, construct a valid HMAC signature using the test secret from `.env`.
+- Test both valid and invalid HMAC scenarios.
+
+### Environment Variables Required for Tests
+- `SHOPIFY_API_KEY` — test app API key
+- `SHOPIFY_API_SECRET` — used for HMAC validation in webhook tests
+- `SHOPIFY_APP_URL` — app host URL for session validation
+```
+
+---
 
 ### File 4 (all stacks): `.claude/skills/testing-standards/SKILL.md`
 

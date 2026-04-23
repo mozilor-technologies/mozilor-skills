@@ -14,6 +14,41 @@ $ARGUMENTS
 
 ---
 
+## Shopify QA *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes` was passed in the arguments, add these checks to your analysis:
+
+**Schema validation — use the Shopify plugin to verify every GraphQL operation in the changed files:**
+
+For each GraphQL query or mutation found in the code:
+```
+search_docs_chunks("Admin API [resource] [operation]")   // confirm the operation exists
+fetch_full_docs("/docs/api/admin-graphql/[resource]")    // verify field names and types
+```
+Flag as CRITICAL any field name, type, or argument that does not match the current schema. These cause silent runtime failures that are hard to trace.
+
+**Auth checks (CRITICAL if missing):**
+- Every non-webhook route calls `authenticate.admin(request)` or `authenticate.storefront(request)`
+- No route bypasses Shopify session validation
+
+**GraphQL checks:**
+- All mutations check `userErrors` in the response — non-empty `userErrors` must surface to the user
+- No hardcoded store domain or access token in the code
+- GraphQL queries use variables, not string interpolation (injection risk)
+
+**Polaris checks:**
+- No raw HTML elements (`<button>`, `<input>`, `<div>` for layout) where Polaris equivalents exist
+- No inline styles — Polaris design tokens or Tailwind (if configured) only
+
+**Remix pattern checks:**
+- Data fetching happens in `loader` functions, not inside components
+- Mutations happen in `action` functions — no direct API calls inside component event handlers
+
+**Rate limiting:**
+- If multiple GraphQL calls are made, flag whether batching or bulk operations should be used
+
+---
+
 ## GitNexus Integration
 
 GitNexus provides a **precomputed knowledge graph** with **semantic search enabled**:
@@ -371,10 +406,14 @@ Update with actual `risk_level`, `symbols_affected`, `outcome.summary` (issues f
 
 ### Required Steps
 
-1. **Run the full test suite:**
-   ```bash
-   uv run pytest tests/ -v --tb=short
-   ```
+1. **Run the full test suite** using the command for the project's backend language:
+
+   | BACKEND_LANG | Test command |
+   |---|---|
+   | `python` | `uv run pytest tests/ -v --tb=short` |
+   | `nodejs` | check `package.json` scripts — run `npm test` or `npm run test` |
+   | `php` | `php artisan test` |
+   | `go` | `go test ./... -v` |
 
 2. **Verify ALL tests pass.** If any test fails:
    - Investigate the failure
@@ -382,10 +421,14 @@ Update with actual `risk_level`, `symbols_affected`, `outcome.summary` (issues f
    - Report the failure as a CRITICAL issue if caused by changes
    - Report as a pre-existing issue if not related to changes
 
-3. **Run linting:**
-   ```bash
-   uv run ruff check .
-   ```
+3. **Run linting** using the command for the project's backend language:
+
+   | BACKEND_LANG | Lint command |
+   |---|---|
+   | `python` | `uv run ruff check .` |
+   | `nodejs` | check `package.json` scripts — run `npm run lint` or `npx eslint .` |
+   | `php` | `./vendor/bin/pint` or `./vendor/bin/phpcs` |
+   | `go` | `go vet ./...` |
 
 4. **Include test results in your report:**
    ```markdown
@@ -395,7 +438,7 @@ Update with actual `risk_level`, `symbols_affected`, `outcome.summary` (issues f
    **Linting:** Pass/Fail
 
    **Failed Tests (if any):**
-   - `test_file.py::test_name` — [reason]
+   - `[test_file]::[test_name]` — [reason]
    ```
 
 ### Why This Matters

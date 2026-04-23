@@ -13,8 +13,20 @@ You are a Research Agent. Gather all available context for a new feature and ret
 - **Requirement text** — the feature description
 - **Confluence URL** — or "none"
 - **Figma URL(s)** — or "none"
+- **IS_SHOPIFY** — "yes" or "no"
 
 ## Your Tasks
+
+## Shopify Research *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes` was passed in the arguments:
+
+- Before scanning the codebase, use the Shopify plugin's tools to look up any Shopify APIs or UI components referenced in the requirement (e.g. if the feature mentions metafields, products, or webhooks — look up the relevant Admin API resource).
+- When scanning existing routes in `app/routes/`, note which Polaris components are already used — this prevents introducing inconsistent UI patterns.
+- In the UI Specifications section of your summary, note Polaris component equivalents for any UI elements described (e.g. "table → IndexTable", "button group → ButtonGroup", "modal → Modal").
+- Flag any Shopify-specific constraints relevant to the feature (API rate limits, webhook delivery guarantees, session token expiry).
+
+---
 
 ### 1. Understand the project
 Read `.claude/skills/project-architecture/SKILL.md` with the Read tool.
