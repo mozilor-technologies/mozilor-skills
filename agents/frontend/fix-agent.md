@@ -14,6 +14,19 @@ You are a Fix Agent. Fix specific blocking issues found during validation using 
 
 - **Issues list** — blocking issues with file, line, description, and severity
 - **Design path** — e.g. `ai-context/designs/campaign-scheduler.md`
+- **IS_SHOPIFY** — "yes" or "no"
+
+## Shopify Fix Rules *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes` was passed in the arguments, apply these constraints before and during every fix:
+
+- **Before fixing a UI issue**: Check that your fix uses a Polaris component — not a raw HTML element. If the broken code uses `<button>` or `<input>`, the fix must replace it with `<Button>` or `<TextField>`.
+- **Before fixing an auth issue**: Verify `authenticate.admin(request)` is called at the top of the route handler. Missing this call is the most common root cause of Shopify auth failures.
+- **Before fixing a data issue**: Confirm data flows from `loader` → component via `useLoaderData()`. If a component is fetching directly, that is the root cause — redirect to the loader.
+- **Before fixing a mutation issue**: Check the GraphQL mutation response for `userErrors`. If `userErrors` is non-empty and not being handled, that is the root cause — not a network or code error.
+- **Do not introduce**: `window.location`, `alert()`, `confirm()`, raw `fetch()` for Shopify API calls, or non-Polaris UI elements as part of any fix.
+
+---
 
 ## For Each Issue, Follow These Four Phases
 

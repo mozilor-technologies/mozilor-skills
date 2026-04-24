@@ -47,11 +47,16 @@ Read the following files at the project root to identify the stack. Use the Read
 
 | File | What to look for |
 |------|-----------------|
+| `shopify.app.toml` | Shopify app (check if file exists) |
 | `package.json` | `dependencies` + `devDependencies` key names |
 | `pyproject.toml` | `[tool.poetry.dependencies]` or `[project]` dependencies |
 | `requirements.txt` | Package names |
 | `go.mod` | module line |
 | `composer.json` | `require` key |
+
+**Shopify indicator**: `shopify.app.toml` exists → set **[IS_SHOPIFY]** = `true`, **[STACK]** = `fullstack`, **[BACKEND_LANG]** = `nodejs`. Skip remaining stack detection and go directly to the Shopify Plugin Check below.
+
+**If not Shopify:**
 
 **Frontend indicators** (in package.json): `react`, `next`, `vue`, `@angular/core`, `svelte`, `solid-js`, `@remix-run`, `preact`, `gatsby`, `astro`, `@nuxt/`
 
@@ -85,12 +90,40 @@ Read the following files at the project root to identify the stack. Use the Read
 
 Set **[STACK]** = `frontend` / `backend` / `fullstack`
 Set **[BACKEND_LANG]** = `nodejs` / `python` / `go` / `php` / `none`
+Set **[IS_SHOPIFY]** = `false`
+
+### Shopify Plugin Check *(IS_SHOPIFY only)*
+
+If **[IS_SHOPIFY]** = `true`, run this exact command — do not modify it:
+```bash
+claude plugin list 2>&1 | grep -A3 "shopify-plugin" | grep -c "✔ enabled"
+```
+
+This outputs `1` if the plugin is installed and enabled, `0` otherwise.
+
+**If the output is `0` — you MUST stop here. Do not read any more files. Do not proceed to stack confirmation. Do not attempt the feature. Output this message exactly and return:**
+
+```
+🛑  Shopify plugin required but not installed.
+
+/start-feature needs the Shopify AI Toolkit to research APIs, validate
+GraphQL queries, and generate correct Shopify code.
+
+Install it first:
+  /plugin marketplace add Shopify/shopify-ai-toolkit
+  /plugin install shopify-plugin@shopify-plugin
+
+Then restart Claude Code and re-run /start-feature.
+```
+
+**If the output is `1` — continue.**
 
 **Present to user:**
 ```
 ## Stack Detected: [STACK]
 Framework: [detected framework and version if visible]
 [If backend or fullstack] Backend language: [BACKEND_LANG]
+[If IS_SHOPIFY] Platform: Shopify (shopify.app.toml detected)
 
 Reply **confirmed** to proceed, or correct me.
 ```
@@ -134,6 +167,7 @@ Read `.claude/skills/coding-standards/SKILL.md`. Extract and condense into **[CO
 
 - **[FIGMA_AVAILABLE]** = "yes" if Figma URLs provided AND pipeline includes `frontend`, else "no"
 - **[GITNEXUS_AVAILABLE]** = yes / no from Step 0
+- **[IS_SHOPIFY]** = yes / no from Step 2
 
 ---
 
@@ -164,6 +198,7 @@ ARGUMENTS:
 Requirement: [REQUIREMENT]
 Confluence URL: [URL OR "none"]
 Figma URL(s): [URL(S) OR "none"]
+IS_SHOPIFY: [IS_SHOPIFY]
 """
 )
 ```
@@ -184,6 +219,7 @@ Agent(
 Research Task:
 Feature: [REQUIREMENT]
 Confluence URL: [URL OR "none"]
+IS_SHOPIFY: [IS_SHOPIFY]
 
 Focus on: similar features in this codebase, patterns to follow (service structure, error handling, auth), and impact points (what changing existing code would break).
 """
@@ -268,6 +304,7 @@ ARGUMENTS:
 [BACKEND_RESEARCH OR RAW REQUIREMENT]
 CODING_RULES_DIGEST: [CODING_RULES_DIGEST]
 BACKEND_LANG: [BACKEND_LANG]
+IS_SHOPIFY: [IS_SHOPIFY]
 """
 )
 ```
@@ -291,6 +328,7 @@ ARGUMENTS:
 [FRONTEND_RESEARCH OR RAW REQUIREMENT]
 CODING_RULES_DIGEST: [CODING_RULES_DIGEST]
 FIGMA_AVAILABLE: [FIGMA_AVAILABLE]
+IS_SHOPIFY: [IS_SHOPIFY]
 """
 )
 ```
@@ -363,6 +401,7 @@ ARGUMENTS:
 Design path: [DESIGN_PATH]
 CODING_RULES_DIGEST: [CODING_RULES_DIGEST]
 FIGMA_AVAILABLE: [FIGMA_AVAILABLE]
+IS_SHOPIFY: [IS_SHOPIFY]
 """
 )
 ```
@@ -391,6 +430,7 @@ Read the spec document completely. Follow:
 
 CODING_RULES_DIGEST: [CODING_RULES_DIGEST]
 BACKEND_LANG: [BACKEND_LANG]
+IS_SHOPIFY: [IS_SHOPIFY]
 """
 )
 ```
@@ -429,7 +469,7 @@ Agent(subagent_type: "general-purpose", model: "haiku", description: "Code revie
 **Agent C** (`model: "haiku"`):
 ```
 Agent(subagent_type: "general-purpose", model: "haiku", description: "Security review: [feature name]",
-  prompt: [security-agent.md content] + "ARGUMENTS: Design path: [DESIGN_PATH]")
+  prompt: [security-agent.md content] + "ARGUMENTS: Design path: [DESIGN_PATH]\nIS_SHOPIFY: [IS_SHOPIFY]")
 ```
 
 ### If PIPELINE = `backend`:
@@ -443,13 +483,13 @@ Then in **one message**, spawn both simultaneously:
 **Agent A** (`model: "opus"`):
 ```
 Agent(subagent_type: "general-purpose", model: "opus", description: "QA: [feature name]",
-  prompt: [qa.md content] + "Code to Analyze:\nSpec: [DESIGN_PATH]\nReview all files listed in Section 4 (File Plan) of the spec.")
+  prompt: [qa.md content] + "Code to Analyze:\nSpec: [DESIGN_PATH]\nReview all files listed in Section 4 (File Plan) of the spec.\nIS_SHOPIFY: [IS_SHOPIFY]")
 ```
 
 **Agent B** (`model: "haiku"`):
 ```
 Agent(subagent_type: "general-purpose", model: "haiku", description: "Security review: [feature name]",
-  prompt: [security-agent.md content] + "ARGUMENTS: Design path: [DESIGN_PATH]")
+  prompt: [security-agent.md content] + "ARGUMENTS: Design path: [DESIGN_PATH]\nIS_SHOPIFY: [IS_SHOPIFY]")
 ```
 
 ---
@@ -473,7 +513,7 @@ Agent(subagent_type: "general-purpose", model: "haiku", description: "Security r
 3. Read `${CLAUDE_PLUGIN_ROOT}/agents/frontend/fix-agent.md`, spawn Fix Agent:
 ```
 Agent(subagent_type: "general-purpose", model: "haiku", description: "Fix: [feature name] iteration [N]",
-  prompt: [fix-agent.md content] + "ARGUMENTS: Design path: [DESIGN_PATH]\nIssues: [LIST WITH FILE, LINE, DESCRIPTION, SEVERITY]")
+  prompt: [fix-agent.md content] + "ARGUMENTS: Design path: [DESIGN_PATH]\nIssues: [LIST WITH FILE, LINE, DESCRIPTION, SEVERITY]\nIS_SHOPIFY: [IS_SHOPIFY]")
 ```
 4. If STUCK returned: surface to user, stop.
 5. Re-run only agents that had blocking issues:
@@ -486,7 +526,7 @@ Agent(subagent_type: "general-purpose", model: "haiku", description: "Fix: [feat
 3. Read `${CLAUDE_PLUGIN_ROOT}/agents/backend/debugger.md`, spawn Debugger Agent:
 ```
 Agent(subagent_type: "general-purpose", model: "opus", description: "Debug: [feature name] iteration [N]",
-  prompt: [debugger.md content] + "Issue to Debug:\n[ISSUE DESCRIPTION WITH FILE AND EVIDENCE]\nSpec path: [DESIGN_PATH]\nCODING_RULES_DIGEST: [CODING_RULES_DIGEST]")
+  prompt: [debugger.md content] + "Issue to Debug:\n[ISSUE DESCRIPTION WITH FILE AND EVIDENCE]\nSpec path: [DESIGN_PATH]\nCODING_RULES_DIGEST: [CODING_RULES_DIGEST]\nIS_SHOPIFY: [IS_SHOPIFY]")
 ```
 4. After fix: re-run QA agent A only (not security on subsequent iterations).
 5. If STUCK returned: surface to user, stop.

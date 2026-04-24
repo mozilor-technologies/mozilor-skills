@@ -14,6 +14,32 @@ $ARGUMENTS
 
 ---
 
+## Shopify Debugging *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes` was passed in the arguments, check these common Shopify-specific root causes before general investigation:
+
+**Auth failures (`401`, `403`, redirect loops):**
+- Is `authenticate.admin(request)` called at the top of the route handler? Missing this is the #1 cause.
+- Has the session expired or been invalidated? Check session storage in `app/db.server.*`.
+- Is the app installed on the store? Check `shopify.app.toml` scopes match what the store has granted.
+
+**GraphQL errors (`extensions.code`, `userErrors`):**
+- Check `userErrors` in the mutation response — non-empty `userErrors` means the mutation ran but Shopify rejected the input. This is not a code error.
+- Check `extensions.cost` in the response — if query cost exceeds the budget, reduce field selection or use pagination.
+- Throttling (`THROTTLED` code): implement exponential backoff or reduce query frequency.
+
+**Webhook issues:**
+- Verify HMAC signature validation in the webhook handler.
+- Check that the webhook topic is registered in `shopify.app.toml` or via API registration.
+- Webhook delivery failures are logged in the Shopify Partner Dashboard — check there first before debugging code.
+
+**Common Shopify patterns to verify:**
+- GraphQL client comes from `authenticate.admin()` — never instantiated directly.
+- All mutations check `userErrors` in the response.
+- Remix loaders/actions handle `authenticate.admin()` errors (redirects to OAuth if session invalid).
+
+---
+
 ## GitNexus Integration
 
 GitNexus provides a **precomputed knowledge graph** with **semantic search enabled**:

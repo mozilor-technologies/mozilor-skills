@@ -90,6 +90,23 @@ Skills are loaded automatically by Claude Code when relevant — no manual invoc
 
 ---
 
+## Shopify Development
+
+If you're working on a Shopify app, install the official Shopify AI Toolkit plugin alongside this one. It gives Claude access to Shopify's GraphQL API schemas, documentation, and code validation.
+
+Run these two commands once per machine (after the mozilor-skills install above):
+
+```bash
+/plugin marketplace add Shopify/shopify-ai-toolkit
+/plugin install shopify-plugin@shopify-plugin
+```
+
+Then run `/setup-project` as normal in your Shopify repo — it will detect `shopify.app.toml` and generate Shopify-aware skill files automatically.
+
+> `/start-feature` requires the Shopify plugin to be installed before it will run in a Shopify project.
+
+---
+
 ## Requirements
 
 - Claude Code latest — run `claude --version` to check, update with `npm i -g @anthropic-ai/claude-code@latest`

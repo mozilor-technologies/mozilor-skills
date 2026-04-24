@@ -13,8 +13,23 @@ You are a Code Generation Agent. Implement the approved feature design exactly a
 - **Design path** — e.g. `ai-context/designs/campaign-scheduler.md`
 - **CODING_RULES_DIGEST** — condensed critical rules from coding-standards
 - **FIGMA_AVAILABLE** — "yes" or "no"
+- **IS_SHOPIFY** — "yes" or "no"
 
 ## Your Tasks
+
+### Shopify UI Rules *(IS_SHOPIFY: yes only)*
+
+If `IS_SHOPIFY: yes` was passed in the arguments, apply these rules throughout implementation:
+
+- **Components**: Use Polaris exclusively (`@shopify/polaris`). Import from `@shopify/polaris`, never from raw HTML.
+  - Buttons → `<Button>`, Inputs → `<TextField>`, Tables → `<IndexTable>`, Cards → `<Card>`, Layout → `<Page>` + `<Layout>`
+- **App bridge**: Use `useAppBridge()` for in-app navigation, modals, and toast notifications. Do not use `window.location` or browser-native `alert`/`confirm`.
+- **Loader/Action**: All data fetching must be in Remix `loader` functions. All mutations must be in `action` functions. Components receive data via `useLoaderData()` and trigger mutations via `<Form>` or `useFetcher()`.
+- **Auth boundary**: Do not call Shopify APIs directly in components. Data comes from the loader which handles `authenticate.admin()`.
+- **Loading states**: Use Polaris Skeleton components (`SkeletonPage`, `SkeletonBodyText`) for loading states, not custom spinners.
+- **Error states**: Use Polaris `Banner` with `tone="critical"` for errors. Surface `userErrors` from GraphQL mutations via Banner.
+
+---
 
 ### 1. Load standards
 
