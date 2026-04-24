@@ -94,12 +94,15 @@ Set **[IS_SHOPIFY]** = `false`
 
 ### Shopify Plugin Check *(IS_SHOPIFY only)*
 
-If **[IS_SHOPIFY]** = `true`, verify the Shopify AI Toolkit plugin is installed and enabled:
+If **[IS_SHOPIFY]** = `true`, run this exact command — do not modify it:
 ```bash
-claude plugin list | grep -A3 "shopify-plugin" | grep "✔ enabled"
+claude plugin list 2>&1 | grep -A3 "shopify-plugin" | grep -c "✔ enabled"
 ```
 
-If the command returns no output (plugin missing or disabled), stop immediately:
+This outputs `1` if the plugin is installed and enabled, `0` otherwise.
+
+**If the output is `0` — you MUST stop here. Do not read any more files. Do not proceed to stack confirmation. Do not attempt the feature. Output this message exactly and return:**
+
 ```
 🛑  Shopify plugin required but not installed.
 
@@ -113,7 +116,7 @@ Install it first:
 Then restart Claude Code and re-run /start-feature.
 ```
 
-Do not proceed until the plugin is installed.
+**If the output is `1` — continue.**
 
 **Present to user:**
 ```
