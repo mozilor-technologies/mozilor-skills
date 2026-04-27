@@ -135,6 +135,7 @@ I need a few clarifications:
 
 **For testing-standards:**
 [Only if unclear: auth setup for tests, required env vars, minimum coverage expectations]
+Do NOT ask about vitest — whether it is present or absent is detected automatically in Step 5.5 and handled without user input.
 ```
 
 Wait for reply before proceeding.
@@ -417,13 +418,154 @@ Then use the **Edit tool** to append this block to `.claude/skills/testing-stand
 Every new or modified exported unit (function, hook, reducer, service, pure utility) must have a test file with at least one positive case and at least one negative case per changed unit. Tests are grouped under `'positive cases'` and `'negative cases'` sub-describes inside a `describe('[unit]')` block. The `/start-feature` orchestrator runs the unit-test stage automatically when the design doc sets `unit_tests_required: true`.
 ```
 
-**If either returned false** — append this block instead:
+**If either returned false** — determine the framework from what was detected in Step 2 (React, Vue, plain TS, etc.), then:
+1. Append the appropriate setup guide to `.claude/skills/testing-standards/SKILL.md` (so it's saved for reference).
+2. **Also print the same setup steps directly in the conversation** so the developer sees them immediately without opening the file. Use this format in your response:
+
+```
+⚠️ Vitest is not configured in this project. The unit-test stage in `/start-feature` will be skipped until you set it up.
+
+Here's how to enable it:
+[paste the same steps you wrote to testing-standards]
+
+Once done, run `/setup-project testing-standards` to re-detect and enable the unit-test stage.
+```
+
+**For React projects**, append:
 
 ```
 ## Unit Testing
 
-**Status:** disabled
-Vitest is not configured in this project. The `/start-feature` orchestrator skips the unit-test stage. To enable: install `vitest`, add a `vitest.config.*` file, and re-run `/setup-project testing-standards`.
+**Status:** disabled — setup required
+
+Vitest is not configured. The `/start-feature` orchestrator skips the unit-test stage until setup is complete.
+
+### Step 1 — Install dependencies
+```bash
+npm install --save-dev vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom @vitejs/plugin-react
+```
+
+### Step 2 — Create `vitest.config.ts` at the project root
+```ts
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/__tests__/setup.ts'],
+  },
+})
+```
+
+### Step 3 — Create `src/__tests__/setup.ts`
+```ts
+import '@testing-library/jest-dom'
+```
+
+### Step 4 — Add scripts to `package.json`
+```json
+"test:unit": "vitest run",
+"test:unit:watch": "vitest"
+```
+
+### Step 5 — Re-run setup
+Once the above is done, run:
+```
+/setup-project testing-standards
+```
+This will re-detect vitest and update this section to enabled.
+```
+
+**For Vue projects**, append:
+
+```
+## Unit Testing
+
+**Status:** disabled — setup required
+
+Vitest is not configured. The `/start-feature` orchestrator skips the unit-test stage until setup is complete.
+
+### Step 1 — Install dependencies
+```bash
+npm install --save-dev vitest jsdom @testing-library/vue @testing-library/user-event @testing-library/jest-dom @vitejs/plugin-vue
+```
+
+### Step 2 — Create `vitest.config.ts` at the project root
+```ts
+import { defineConfig } from 'vitest/config'
+import vue from '@vitejs/plugin-vue'
+
+export default defineConfig({
+  plugins: [vue()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/__tests__/setup.ts'],
+  },
+})
+```
+
+### Step 3 — Create `src/__tests__/setup.ts`
+```ts
+import '@testing-library/jest-dom'
+```
+
+### Step 4 — Add scripts to `package.json`
+```json
+"test:unit": "vitest run",
+"test:unit:watch": "vitest"
+```
+
+### Step 5 — Re-run setup
+Once the above is done, run:
+```
+/setup-project testing-standards
+```
+This will re-detect vitest and update this section to enabled.
+```
+
+**For all other frontend/fullstack projects (plain TypeScript, Next.js without React Testing Library, etc.)**, append:
+
+```
+## Unit Testing
+
+**Status:** disabled — setup required
+
+Vitest is not configured. The `/start-feature` orchestrator skips the unit-test stage until setup is complete.
+
+### Step 1 — Install dependencies
+```bash
+npm install --save-dev vitest
+```
+Add `jsdom` if you need DOM APIs: `npm install --save-dev jsdom`
+
+### Step 2 — Create `vitest.config.ts` at the project root
+```ts
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+  test: {
+    environment: 'node', // change to 'jsdom' if testing DOM code
+    globals: true,
+  },
+})
+```
+
+### Step 3 — Add scripts to `package.json`
+```json
+"test:unit": "vitest run",
+"test:unit:watch": "vitest"
+```
+
+### Step 4 — Re-run setup
+Once the above is done, run:
+```
+/setup-project testing-standards
+```
+This will re-detect vitest and update this section to enabled.
 ```
 
 ---
