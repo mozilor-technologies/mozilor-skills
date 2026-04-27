@@ -15,6 +15,7 @@ You are a Design Agent. Your job is to produce a comprehensive feature design do
 - **CODING_RULES_DIGEST** — condensed coding standards (passed by orchestrator; do NOT re-read coding-standards/SKILL.md)
 - **ARCH_DIGEST** — condensed architecture overview (passed by orchestrator; do NOT load project-architecture yourself)
 - **FIGMA_AVAILABLE** — `"yes"` or `"no"` (passed by orchestrator)
+- **UNIT_TESTING_ENABLED** — `"yes"` or `"no"` (passed by orchestrator — reflects whether vitest is configured per `testing-standards`)
 
 ## Your Tasks
 
@@ -112,6 +113,39 @@ Resolve each design token used in this feature to its computed `rgb()` by readin
 | text-primary   | #132e5a  | rgb(19, 46, 90)    |
 | text-muted     | #6b7280  | rgb(107, 114, 128) |
 ```
+
+## 9b. Unit Test Spec *(only when unit tests are required)*
+
+**Decide `unit_tests_required`:**
+- If `UNIT_TESTING_ENABLED = "no"` → set `unit_tests_required: false` and omit this section entirely.
+- Else classify the feature:
+  - **Functional** (`unit_tests_required: true`) — introduces or modifies any pure function, custom hook, reducer, selector, service/API client, store action, validator, formatter, or data transformer.
+  - **Cosmetic-only** (`unit_tests_required: false`) — only changes JSX structure, className, copy, or layout with no behavioural logic. Omit this section.
+
+**When `unit_tests_required: true`, write the section in this shape:**
+
+```
+unit_tests_required: true
+
+For every new or modified testable unit:
+
+### [unit name] — [file path]
+Import: `import { [name] } from '[path from project root or alias]'`
+
+Positive cases:
+1. [input] → [expected output]
+2. ...
+
+Negative cases:
+1. [invalid input / error condition] → [expected behaviour, thrown error, or rejection]
+2. ...
+```
+
+**Rules:**
+- Every listed unit must have ≥ 1 positive case and ≥ 1 negative case.
+- Across the spec, aim for roughly 50/50 positive to negative cases. If a unit has no meaningful failure mode (e.g. pure enum mapper), document why in a one-line comment.
+- Never list components or pages here — only units with testable logic.
+- The unit-test agent implements this verbatim and additionally writes tests for any changed exported unit it discovers in the codegen diff that is not listed here.
 
 ## 10. Acceptance Criteria Checklist
 Verbatim from the confirmed requirements. Each item must map to at least one test case in Section 9.

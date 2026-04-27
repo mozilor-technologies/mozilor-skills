@@ -383,6 +383,51 @@ description: "[FRAMEWORK] testing standards for [APP NAME]. Covers test structur
 
 ---
 
+## Step 5.5 — Append Unit Testing section to testing-standards (frontend/fullstack only)
+
+Skip this step for pure backend stacks.
+
+Run these two Bash commands now to detect vitest:
+
+```bash
+grep -q '"vitest"' package.json 2>/dev/null && echo "vitest_in_pkg=true" || echo "vitest_in_pkg=false"
+```
+```bash
+ls vitest.config.* 2>/dev/null && echo "vitest_config=true" || echo "vitest_config=false"
+```
+
+Wait for the results, then:
+
+**If both returned true** — also run:
+```bash
+node -e "const s=require('./package.json').scripts||{}; const k=Object.keys(s).find(k=>s[k].includes('vitest')); console.log(k ? 'npm run '+k : 'npx vitest run')"
+```
+to resolve the run command.
+
+Then use the **Edit tool** to append this block to `.claude/skills/testing-standards/SKILL.md` (add a blank line before it if the file doesn't already end with one):
+
+```
+## Unit Testing
+
+**Status:** enabled
+**Framework:** vitest
+**Run command:** [resolved run command from above]
+**Test file convention:** [co-located *.test.ts(x) next to source — OR — __tests__/ folder mirroring src/ — pick whichever already exists in the project; default to co-located]
+
+Every new or modified exported unit (function, hook, reducer, service, pure utility) must have a test file with at least one positive case and at least one negative case per changed unit. Tests are grouped under `'positive cases'` and `'negative cases'` sub-describes inside a `describe('[unit]')` block. The `/start-feature` orchestrator runs the unit-test stage automatically when the design doc sets `unit_tests_required: true`.
+```
+
+**If either returned false** — append this block instead:
+
+```
+## Unit Testing
+
+**Status:** disabled
+Vitest is not configured in this project. The `/start-feature` orchestrator skips the unit-test stage. To enable: install `vitest`, add a `vitest.config.*` file, and re-run `/setup-project testing-standards`.
+```
+
+---
+
 ## Step 6 — Report
 
 ```

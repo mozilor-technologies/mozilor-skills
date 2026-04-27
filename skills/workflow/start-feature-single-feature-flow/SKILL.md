@@ -64,6 +64,15 @@ Read `.claude/skills/project-architecture/SKILL.md` once. Extract a condensed di
 
 Store as `[FIGMA_AVAILABLE]`. Pass to design and codegen agents.
 
+### 4. Set UNIT_TESTING_ENABLED flag
+Read `.claude/skills/testing-standards/SKILL.md` and look at the `## Unit Testing` section.
+- `**Status:** enabled` → `UNIT_TESTING_ENABLED = "yes"`
+- `**Status:** disabled` or section missing → `UNIT_TESTING_ENABLED = "no"`
+
+Store as `[UNIT_TESTING_ENABLED]`. This decides whether the unit-test stage runs in Phase 6; it is determined once per `/start-feature` invocation and not re-checked. If the project adds vitest later, the user must re-run `/setup-project` to refresh `testing-standards`.
+
+Pass `[UNIT_TESTING_ENABLED]` to the design agent so it can populate Section 9b.
+
 ---
 
 ## Step 1.5 — Complexity Check
@@ -193,11 +202,14 @@ Spawn the Design Agent:
   CODING_RULES_DIGEST: [CODING_RULES_DIGEST]
   ARCH_DIGEST: [ARCH_DIGEST]
   FIGMA_AVAILABLE: [FIGMA_AVAILABLE]
+  UNIT_TESTING_ENABLED: [UNIT_TESTING_ENABLED]
   ```
 
 Wait for the agent to return `DESIGN_PATH: ai-context/designs/[feature-name].md`.
 
 Store as `[DESIGN_PATH]`. Derive `[ITERATION_STATE_PATH]` = `ai-context/iteration-state/[feature-name].json`.
+
+**Parse `[UNIT_TESTS_REQUIRED]` from the design doc.** Grep `[DESIGN_PATH]` for `unit_tests_required:`. Set `[UNIT_TESTS_REQUIRED] = "yes"` if the value is `true`, else `"no"`. Carry this flag into Phase 4.5 and Phase 6.
 
 ---
 
@@ -289,6 +301,8 @@ Before spawning the codegen agent, declare a compact handoff. Everything from Ph
 - `[CODING_RULES_DIGEST]`
 - `[ARCH_DIGEST]`
 - `[FIGMA_AVAILABLE]`
+- `[UNIT_TESTING_ENABLED]`
+- `[UNIT_TESTS_REQUIRED]`
 - `[FEEDBACK_HISTORY]` (empty at this point)
 
 Do not reference or re-read any prior phase content. The design doc is the single source of truth from Phase 5 onward.
@@ -317,7 +331,7 @@ Wait for the files list — or surface BLOCKED to the user.
 
 ## Phase 6 — Parallel Validation
 
-Launch **three agents simultaneously** in one message:
+Launch the validation agents **simultaneously** in one message. Include Agent D only when `[UNIT_TESTING_ENABLED] = "yes"` **and** `[UNIT_TESTS_REQUIRED] = "yes"` — otherwise skip it and launch only A, B, C.
 
 **Agent A** — Test Agent (`model: "sonnet"`):
 - `subagent_type`: `"general-purpose"`
@@ -356,11 +370,23 @@ Launch **three agents simultaneously** in one message:
   Design path: [DESIGN_PATH]
   ```
 
+**Agent D** — Unit Test Agent *(launch only when `[UNIT_TESTING_ENABLED] = "yes"` AND `[UNIT_TESTS_REQUIRED] = "yes"`)* (`model: "sonnet"`):
+- `subagent_type`: `"general-purpose"`
+- `description`: `"Unit tests: [feature name]"`
+- `prompt`:
+  ```
+  Read `.claude/agents/sf-unit-test-agent.md` for your full instructions, then execute with the ARGUMENTS below.
+
+  ARGUMENTS:
+  Design path: [DESIGN_PATH]
+  Feature name: [feature-name]
+  ```
+
 ---
 
 ## Phase 7 — Iteration Loop (Evaluator-Optimizer)
 
-**Blocking:** test failures, code review `critical`/`major`, security `critical`/`major`.
+**Blocking:** Playwright test failures, unit test failures (Agent D FAIL or BLOCKED), code review `critical`/`major`, security `critical`/`major`.
 `minor` = non-blocking (note, don't iterate).
 
 **If no blocking issues:** go to Phase 8.
@@ -408,7 +434,9 @@ This history is passed to the fix agent each iteration so it does not repeat fai
    ```
 
 6. Re-run only agents that had blocking issues:
-   - Tests failed → re-run **Agent A + Agent B** (same prompt pattern as Phase 6)
+   - Playwright tests failed → re-run **Agent A + Agent B** (same prompt pattern as Phase 6)
+   - Unit tests failed/BLOCKED → re-run **Agent D + Agent B**
+   - Both Playwright and unit tests failed → re-run **Agent A + Agent D + Agent B**
    - Code review only → re-run **Agent B only**
    - Security issues → re-run **Agent C only** (iteration 1 only)
 
