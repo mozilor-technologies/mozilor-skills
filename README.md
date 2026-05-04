@@ -79,6 +79,23 @@ Skills are loaded automatically by Claude Code when relevant — no manual invoc
 | **laravel-woo** | PHP projects — Laravel and WooCommerce patterns |
 | **security** | Any implementation — OWASP Top 10, auth, input validation, secrets |
 
+### Shopify Skills
+
+`mozilor-skills` bundles a curated set of Shopify skills sourced from [Shopify's official AI Toolkit](https://github.com/Shopify/Shopify-AI-Toolkit) (MIT-licensed), plus a Mozilor-authored `shopify-polaris-react` skill specifically for Remix-template apps using `@shopify/shopify-app-remix`.
+
+| Skill | When Claude uses it |
+|-------|-------------------|
+| **shopify-polaris-react** *(Mozilor)* | Polaris React UI in Remix admin apps — `AppProvider`, `NavMenu`, `useAppBridge`, save bar/toast/modal, GraphQL via `admin.graphql()`, webhook handlers |
+| **shopify-polaris-admin-extensions** | UI extensions under `extensions/` — admin blocks and action menu items (these legitimately use `s-*` web components) |
+| **shopify-admin** | Authoring Admin GraphQL queries and mutations |
+| **shopify-custom-data** | Metafields and metaobjects |
+| **shopify-liquid** | Liquid theme code — sections, blocks, snippets |
+| **shopify-use-shopify-cli** | Shopify CLI tasks — config validation, store auth, executing queries |
+| **shopify-dev** | Catch-all docs search across `shopify.dev` |
+| **shopify-app-store-review** | Pre-submission App Store compliance check |
+
+On a Shopify Remix repo (detected via `@shopify/shopify-app-remix` in `package.json`), `/setup-project` writes a managed section to `CLAUDE.md` pointing agents at the `shopify-polaris-react` skill and pinning auth, API, and webhook conventions for the framework.
+
 ### Workflow Skills
 
 | Skill | When Claude uses it |

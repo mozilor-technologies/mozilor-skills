@@ -1,6 +1,6 @@
 {
   "name": "mozilor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Mozilor Technologies unified agentic development workflow. Auto-detects frontend (React/Next.js), backend (Node.js/Python/Go/Laravel), and fullstack stacks. Runs the right pipeline automatically: 8 frontend agents (research → design → codegen → test → fix) or 5 backend agents (research → spec → implement → QA → debug).",
   "author": {
     "name": "Mozilor Technologies",
@@ -24,6 +24,8 @@
     "nodejs",
     "python",
     "go",
-    "laravel"
+    "laravel",
+    "shopify",
+    "remix"
   ]
 }
