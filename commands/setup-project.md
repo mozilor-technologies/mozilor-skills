@@ -603,7 +603,7 @@ Section content (write verbatim, including the markers):
 <!-- mozilor:shopify-remix:start -->
 ## Shopify Remix App Conventions (managed by mozilor-skills)
 
-This is a Shopify embedded admin app using `@shopify/shopify-app-remix`.
+This project supports projects that uses`@shopify/shopify-app-remix` for building embedded admin apps in Shopify.
 
 - **UI**: Use Shopify Polaris React components from `@shopify/polaris` — the bundled `shopify-polaris-react` skill has the canonical patterns. Do NOT use Polaris web components (`s-page`, `s-button`, `s-card`, etc.) in the app shell; those belong to UI extensions only (see `shopify-polaris-admin-extensions` for files under `extensions/`).
 - **Auth**: Use `authenticate.admin(request)` from `app/shopify.server`. Never roll your own session validation.
