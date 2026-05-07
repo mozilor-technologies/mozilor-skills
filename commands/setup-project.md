@@ -60,6 +60,13 @@ Read the following files using the Read tool:
 Set **[STACK]** = `frontend` / `backend` / `fullstack`
 Set **[BACKEND_LANG]** = `nodejs` / `python` / `go` / `php` / `none`
 
+### Shopify Remix sub-detection
+
+After STACK is set, also check `package.json` dependencies for `@shopify/shopify-app-remix`.
+
+- If present: set **[SHOPIFY_REMIX]** = `yes`. Treat the project as `fullstack` (Remix loaders/actions = backend; Polaris React = frontend).
+- Else: set **[SHOPIFY_REMIX]** = `no`.
+
 ---
 
 ## Step 3 — Explore the codebase
@@ -570,12 +577,51 @@ This will re-detect vitest and update this section to enabled.
 
 ---
 
+## Step 5.6 — Shopify Remix CLAUDE.md guidance
+
+Run only if **[SHOPIFY_REMIX]** = `yes`. Otherwise skip to Step 6.
+
+Read `CLAUDE.md` at the project root if it exists.
+
+The managed section is fenced by:
+```
+<!-- mozilor:shopify-remix:start -->
+...
+<!-- mozilor:shopify-remix:end -->
+```
+
+Behavior:
+- If `CLAUDE.md` does not exist: create it containing only the managed section below.
+- If `CLAUDE.md` exists and contains the fenced section: replace the contents between the markers.
+- If `CLAUDE.md` exists but has no fenced section: append the managed section to the end (preceded by a blank line).
+
+**Never** modify content outside the fenced markers.
+
+Section content (write verbatim, including the markers):
+
+```
+<!-- mozilor:shopify-remix:start -->
+## Shopify Remix App Conventions (managed by mozilor-skills)
+
+This project supports projects that uses`@shopify/shopify-app-remix` for building embedded admin apps in Shopify.
+
+- **UI**: Use Shopify Polaris React components from `@shopify/polaris` — the bundled `shopify-polaris-react` skill has the canonical patterns. Do NOT use Polaris web components (`s-page`, `s-button`, `s-card`, etc.) in the app shell; those belong to UI extensions only (see `shopify-polaris-admin-extensions` for files under `extensions/`).
+- **Auth**: Use `authenticate.admin(request)` from `app/shopify.server`. Never roll your own session validation.
+- **API**: Use `admin.graphql()` for Admin API calls. Do not call `fetch()` against `*.myshopify.com` directly.
+- **Webhooks**: HMAC verification is handled by `authenticate.webhook(request)`. Do not reimplement signature checking.
+- **Mixed-pattern files**: If a file already uses an older pattern, match the surrounding file. Do not introduce new patterns mid-file.
+<!-- mozilor:shopify-remix:end -->
+```
+
+---
+
 ## Step 6 — Report
 
 ```
 Project setup complete.
 
 Stack detected: [STACK]
+[If [SHOPIFY_REMIX] = "yes": "Shopify Remix detected — managed section written to CLAUDE.md."]
 Files written:
 [List of files actually written]
 
